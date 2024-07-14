@@ -1,139 +1,41 @@
-/**
- * Owl Carousel v2.3.4
- * Copyright 2013-2018 David Deutsch
- * Licensed under: SEE LICENSE IN https://github.com/OwlCarousel2/OwlCarousel2/blob/master/LICENSE
- */
-/**
- * Owl carousel
- * @version 2.3.4
- * @author Bartosz Wojciechowski
- * @author David Deutsch
- * @license The MIT License (MIT)
- * @todo Lazy Load Icon
- * @todo prevent animationend bubling
- * @todo itemsScaleUp
- * @todo Test Zepto
- * @todo stagePadding calculate wrong active classes
- */
 ;(function($, window, document, undefined) {
 
-	/**
-	 * Creates a carousel.
-	 * @class The Owl Carousel.
-	 * @public
-	 * @param {HTMLElement|jQuery} element - The element to create the carousel for.
-	 * @param {Object} [options] - The options
-	 */
 	function Owl(element, options) {
 
-		/**
-		 * Current settings for the carousel.
-		 * @public
-		 */
 		this.settings = null;
 
-		/**
-		 * Current options set by the caller including defaults.
-		 * @public
-		 */
 		this.options = $.extend({}, Owl.Defaults, options);
 
-		/**
-		 * Plugin element.
-		 * @public
-		 */
 		this.$element = $(element);
 
-		/**
-		 * Proxied event handlers.
-		 * @protected
-		 */
 		this._handlers = {};
 
-		/**
-		 * References to the running plugins of this carousel.
-		 * @protected
-		 */
 		this._plugins = {};
 
-		/**
-		 * Currently suppressed events to prevent them from being retriggered.
-		 * @protected
-		 */
 		this._supress = {};
 
-		/**
-		 * Absolute current position.
-		 * @protected
-		 */
 		this._current = null;
 
-		/**
-		 * Animation speed in milliseconds.
-		 * @protected
-		 */
 		this._speed = null;
 
-		/**
-		 * Coordinates of all items in pixel.
-		 * @todo The name of this member is missleading.
-		 * @protected
-		 */
 		this._coordinates = [];
 
-		/**
-		 * Current breakpoint.
-		 * @todo Real media queries would be nice.
-		 * @protected
-		 */
 		this._breakpoint = null;
 
-		/**
-		 * Current width of the plugin element.
-		 */
 		this._width = null;
 
-		/**
-		 * All real items.
-		 * @protected
-		 */
 		this._items = [];
 
-		/**
-		 * All cloned items.
-		 * @protected
-		 */
 		this._clones = [];
 
-		/**
-		 * Merge values of all items.
-		 * @todo Maybe this could be part of a plugin.
-		 * @protected
-		 */
 		this._mergers = [];
 
-		/**
-		 * Widths of all items.
-		 */
 		this._widths = [];
 
-		/**
-		 * Invalidated parts within the update process.
-		 * @protected
-		 */
 		this._invalidated = {};
 
-		/**
-		 * Ordered list of workers for the update process.
-		 * @protected
-		 */
 		this._pipe = [];
 
-		/**
-		 * Current state information for the drag operation.
-		 * @todo #261
-		 * @protected
-		 */
 		this._drag = {
 			time: null,
 			target: null,
@@ -145,11 +47,6 @@
 			direction: null
 		};
 
-		/**
-		 * Current state information and their tags.
-		 * @type {Object}
-		 * @protected
-		 */
 		this._states = {
 			current: {},
 			tags: {
@@ -179,10 +76,6 @@
 		this.initialize();
 	}
 
-	/**
-	 * Default options for the carousel.
-	 * @public
-	 */
 	Owl.Defaults = {
 		items: 3,
 		loop: false,
@@ -234,38 +127,19 @@
 		grabClass: 'owl-grab'
 	};
 
-	/**
-	 * Enumeration for width.
-	 * @public
-	 * @readonly
-	 * @enum {String}
-	 */
 	Owl.Width = {
 		Default: 'default',
 		Inner: 'inner',
 		Outer: 'outer'
 	};
 
-	/**
-	 * Enumeration for types.
-	 * @public
-	 * @readonly
-	 * @enum {String}
-	 */
 	Owl.Type = {
 		Event: 'event',
 		State: 'state'
 	};
 
-	/**
-	 * Contains all registered plugins.
-	 * @public
-	 */
 	Owl.Plugins = {};
 
-	/**
-	 * List of workers involved in the update process.
-	 */
 	Owl.Workers = [ {
 		filter: [ 'width', 'settings' ],
 		run: function() {
@@ -445,37 +319,27 @@
 		}
 	} ];
 
-	/**
-	 * Create the stage DOM element
-	 */
 	Owl.prototype.initializeStage = function() {
 		this.$stage = this.$element.find('.' + this.settings.stageClass);
 
-		// if the stage is already in the DOM, grab it and skip stage initialization
 		if (this.$stage.length) {
 			return;
 		}
 
 		this.$element.addClass(this.options.loadingClass);
 
-		// create stage
 		this.$stage = $('<' + this.settings.stageElement + '>', {
 			"class": this.settings.stageClass
 		}).wrap( $( '<div/>', {
 			"class": this.settings.stageOuterClass
 		}));
 
-		// append stage
 		this.$element.append(this.$stage.parent());
 	};
 
-	/**
-	 * Create item DOM elements
-	 */
 	Owl.prototype.initializeItems = function() {
 		var $items = this.$element.find('.owl-item');
 
-		// if the items are already in the DOM, grab them and skip item initialization
 		if ($items.length) {
 			this._items = $items.get().map(function(item) {
 				return $(item);
@@ -490,15 +354,11 @@
 			return;
 		}
 
-		// append content
 		this.replace(this.$element.children().not(this.$stage.parent()));
 
-		// check visibility
 		if (this.isVisible()) {
-			// update view
 			this.refresh();
 		} else {
-			// invalidate width
 			this.invalidate('width');
 		}
 
@@ -507,10 +367,6 @@
 			.addClass(this.options.loadedClass);
 	};
 
-	/**
-	 * Initializes the carousel.
-	 * @protected
-	 */
 	Owl.prototype.initialize = function() {
 		this.enter('initializing');
 		this.trigger('initialize');
@@ -538,23 +394,12 @@
 		this.trigger('initialized');
 	};
 
-	/**
-	 * @returns {Boolean} visibility of $element
-	 *                    if you know the carousel will always be visible you can set `checkVisibility` to `false` to
-	 *                    prevent the expensive browser layout forced reflow the $element.is(':visible') does
-	 */
 	Owl.prototype.isVisible = function() {
 		return this.settings.checkVisibility
 			? this.$element.is(':visible')
 			: true;
 	};
 
-	/**
-	 * Setups the current settings.
-	 * @todo Remove responsive classes. Why should adaptive designs be brought into IE8?
-	 * @todo Support for media queries by using `matchMedia` would be nice.
-	 * @public
-	 */
 	Owl.prototype.setup = function() {
 		var viewport = this.viewport(),
 			overwrites = this.options.responsive,
@@ -591,10 +436,6 @@
 		this.trigger('changed', { property: { name: 'settings', value: this.settings } });
 	};
 
-	/**
-	 * Updates option logic if necessery.
-	 * @protected
-	 */
 	Owl.prototype.optionsLogic = function() {
 		if (this.settings.autoWidth) {
 			this.settings.stagePadding = false;
@@ -602,12 +443,6 @@
 		}
 	};
 
-	/**
-	 * Prepares an item before add.
-	 * @todo Rename event parameter `content` to `item`.
-	 * @protected
-	 * @returns {jQuery|HTMLElement} - The item container.
-	 */
 	Owl.prototype.prepare = function(item) {
 		var event = this.trigger('prepare', { content: item });
 
